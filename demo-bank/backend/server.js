@@ -85,6 +85,8 @@ const accountNumber = `DEMO${String(nextNumber).padStart(5, "0")}`;
 });
 
 
-app.listen(5001, () => {
-  console.log("Demo Bank backend running on port 5001");
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, () => {
+  console.log(`Demo Bank backend running on port ${PORT}`);
 });
