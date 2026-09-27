@@ -11,13 +11,13 @@ function App() {
   const handleCreateAccount = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/create-account",
-        {
-          name,
-          mobile,
-          balance,
-        }
-      );
+  "https://amis-pay-demo-bank-backend.onrender.com/api/create-account",
+  {
+    name,
+    mobile,
+    balance,
+  }
+);
 
       setMessage(response.data.message);
       setAccount(response.data);
