@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+const fs = require("fs");
 require("dotenv").config();
 
 const app = express();
@@ -14,6 +15,9 @@ const db = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
+   ssl: {
+    ca: fs.readFileSync("./isrgrootx1 (1).pem")
+  },
 });
 
 app.get("/", (req, res) => {
