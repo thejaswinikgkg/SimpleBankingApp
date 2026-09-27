@@ -23,9 +23,10 @@ function App() {
       setAccount(response.data);
     } catch (error) {
       setMessage(
-        error.response?.data?.message ||
-          "Failed to create account"
-      );
+  error.response?.data?.error ||
+    error.response?.data?.message ||
+    "Failed to create account"
+);
     }
   };
 
