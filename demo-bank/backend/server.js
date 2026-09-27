@@ -15,10 +15,11 @@ const db = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
-   ssl: {
-  ca: fs.readFileSync("./isrgrootx1 (1).pem"),
-  rejectUnauthorized: true
-},
+
+  ssl: {
+    ca: fs.readFileSync("./isrgrootx1 (1).pem"),
+    rejectUnauthorized: true
+  }
 });
 
 app.get("/", (req, res) => {
@@ -31,18 +32,17 @@ app.get("/test-db", async (req, res) => {
 
     res.json({
       message: "Database connected successfully",
-      result: rows[0].result,
+      result: rows[0].result
     });
   } catch (error) {
     console.error(error);
 
-   res.status(500).json({
-  message: "Failed to create demo account",
-  error: error.message
-});
+    res.status(500).json({
+      message: "Database connection failed",
+      error: error.message
+    });
   }
 });
-
 
 app.post("/api/create-account", async (req, res) => {
   const { name, mobile, balance } = req.body;
@@ -50,27 +50,32 @@ app.post("/api/create-account", async (req, res) => {
   try {
     if (!name || !mobile || balance === undefined) {
       return res.status(400).json({
-        message: "Name, mobile number and balance are required",
+        message: "Name, mobile number and balance are required"
       });
     }
 
     const [customerRows] = await db.query(
-  "SELECT COUNT(*) AS count FROM demo_customers"
-);
+      "SELECT COUNT(*) AS count FROM demo_customers"
+    );
 
-const nextNumber = customerRows[0].count + 1;
+    const nextNumber = customerRows[0].count + 1;
 
-const customerId = `CUST${String(nextNumber).padStart(4, "0")}`;
-const accountNumber = `DEMO${String(nextNumber).padStart(5, "0")}`;
+    const customerId =
+      `CUST${String(nextNumber).padStart(4, "0")}`;
+
+    const accountNumber =
+      `DEMO${String(nextNumber).padStart(5, "0")}`;
 
     await db.query(
-      `INSERT INTO demo_customers (customer_id, name, mobile)
+      `INSERT INTO demo_customers
+       (customer_id, name, mobile)
        VALUES (?, ?, ?)`,
       [customerId, name.trim(), mobile.trim()]
     );
 
-    const [accountResult] = await db.query(
-      `INSERT INTO accounts (customer_id, account_number, balance)
+    await db.query(
+      `INSERT INTO accounts
+       (customer_id, account_number, balance)
        VALUES (?, ?, ?)`,
       [customerId, accountNumber, balance]
     );
@@ -79,17 +84,18 @@ const accountNumber = `DEMO${String(nextNumber).padStart(5, "0")}`;
       message: "Demo account created successfully",
       customerId,
       accountNumber,
-      balance,
+      balance
     });
+
   } catch (error) {
     console.error(error);
 
     res.status(500).json({
       message: "Failed to create demo account",
+      error: error.message
     });
   }
 });
-
 
 const PORT = process.env.PORT || 5001;
 
