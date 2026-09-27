@@ -77,8 +77,9 @@ app.get("/test-db", async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      message: "Database connection failed"
-    });
+  message: "Database connection failed",
+  error: error.message
+});
   }
 });
 
