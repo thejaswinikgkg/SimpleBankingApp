@@ -16,8 +16,9 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
    ssl: {
-    ca: fs.readFileSync("./isrgrootx1 (1).pem")
-  },
+  ca: fs.readFileSync("./isrgrootx1 (1).pem"),
+  rejectUnauthorized: true
+},
 });
 
 app.get("/", (req, res) => {
