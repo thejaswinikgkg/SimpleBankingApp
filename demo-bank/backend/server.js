@@ -36,9 +36,10 @@ app.get("/test-db", async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    res.status(500).json({
-      message: "Database connection failed",
-    });
+   res.status(500).json({
+  message: "Failed to create demo account",
+  error: error.message
+});
   }
 });
 
