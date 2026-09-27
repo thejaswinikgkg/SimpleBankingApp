@@ -11,9 +11,7 @@ import axios from "axios";
 
 import Brand from "../components/Brand";
 
-const API_URL =
-  "http://localhost:5000";
-
+const API_URL ="https://amis-pay-backend.onrender.com";
 
 function Register() {
 
