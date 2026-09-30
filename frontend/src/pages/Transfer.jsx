@@ -10,6 +10,7 @@ import axios from "axios";
 
 import Brand from "../components/Brand";
 
+
 const API_URL =
   "https://amis-pay-backend.onrender.com";
 
@@ -19,13 +20,14 @@ function Transfer() {
   const navigate =
     useNavigate();
 
+
   const token =
     localStorage.getItem("token");
 
 
   const [
-    receiverAccountNumber,
-    setReceiverAccountNumber
+    receiverIdentifier,
+    setReceiverIdentifier
   ] = useState("");
 
 
@@ -63,13 +65,13 @@ function Transfer() {
 
 
     if (
-      !receiverAccountNumber ||
+      !receiverIdentifier ||
       !amount ||
       !secretKey
     ) {
 
       setMessage(
-        "Please enter receiver account, amount and secret key."
+        "Please enter receiver account/mobile, amount and secret key."
       );
 
       return;
@@ -85,7 +87,7 @@ function Transfer() {
         await axios.post(
           `${API_URL}/api/transfer`,
           {
-            receiverAccountNumber,
+            receiverIdentifier,
             amount,
             secretKey
           },
@@ -103,9 +105,7 @@ function Transfer() {
       );
 
 
-      setReceiverAccountNumber(
-        ""
-      );
+      setReceiverIdentifier("");
 
       setAmount("");
 
@@ -146,13 +146,13 @@ function Transfer() {
 
         <input
           type="text"
-          placeholder="Receiver Account Number"
+          placeholder="Receiver Account Number or Mobile Number"
           value={
-            receiverAccountNumber
+            receiverIdentifier
           }
           onChange={
             e =>
-              setReceiverAccountNumber(
+              setReceiverIdentifier(
                 e.target.value
               )
           }
@@ -194,11 +194,13 @@ function Transfer() {
             loading
           }
         >
+
           {
             loading
               ? "Processing..."
               : "Transfer Money"
           }
+
         </button>
 
       </form>
@@ -221,11 +223,14 @@ function Transfer() {
           )
         }
       >
+
         Back to Dashboard
+
       </button>
 
     </div>
   );
 }
+
 
 export default Transfer;
