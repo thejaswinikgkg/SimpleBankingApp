@@ -74,6 +74,6 @@ purposes. It is not a real banking application and must not be
 used for real financial transactions.
 
 ## Author
-Thejaswini K G
-Information Science and Engineering
+Thejaswini K G,
+Information Science and Engineering,
 Siddaganga Institute of Technology, Tumakuru
