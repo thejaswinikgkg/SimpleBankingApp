@@ -77,9 +77,8 @@ app.get("/test-db", async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-  message: "Database connection failed",
-  error: error.message
-});
+      message: "Database connection failed"
+    });
   }
 });
 
@@ -406,8 +405,9 @@ app.get(
   "/api/dashboard",
   authenticateToken,
   async (req, res) => {
-    console.log("JWT USER:", req.user);
+
     try {
+
       const customerId =
         req.user.customerId;
 
@@ -431,9 +431,6 @@ app.get(
         });
       }
 
-      // Balance is deliberately not returned here.
-      // It requires secret-key verification.
-
       res.json({
         customerId:
           rows[0].customer_id,
@@ -446,6 +443,7 @@ app.get(
       });
 
     } catch (error) {
+
       console.error(error);
 
       res.status(500).json({
@@ -465,7 +463,9 @@ app.post(
   "/api/balance",
   authenticateToken,
   async (req, res) => {
+
     try {
+
       const customerId =
         req.user.customerId;
 
@@ -532,6 +532,7 @@ app.post(
       });
 
     } catch (error) {
+
       console.error(error);
 
       res.status(500).json({
@@ -545,6 +546,7 @@ app.post(
 
 // ==================================================
 // TRANSFER MONEY
+// Supports Account Number OR Mobile Number
 // ==================================================
 
 app.post(
@@ -556,8 +558,9 @@ app.post(
       await db.getConnection();
 
     try {
+
       const {
-        receiverAccountNumber,
+        receiverIdentifier,
         amount,
         secretKey
       } = req.body;
@@ -566,19 +569,21 @@ app.post(
         Number(amount);
 
       if (
-        !receiverAccountNumber ||
+        !receiverIdentifier ||
         !transferAmount ||
         !secretKey
       ) {
+
         return res.status(400).json({
           message:
-            "Receiver account, amount and secret key are required"
+            "Receiver account/mobile, amount and secret key are required"
         });
       }
 
       if (
         transferAmount <= 0
       ) {
+
         return res.status(400).json({
           message:
             "Amount must be greater than zero"
@@ -588,6 +593,7 @@ app.post(
       if (
         secretKey.length < 6
       ) {
+
         return res.status(400).json({
           message:
             "Invalid secret key"
@@ -599,7 +605,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Verify Secret Key
+      // Verify Sender Secret Key
       // ----------------------------------------------
 
       const [userRows] =
@@ -610,7 +616,10 @@ app.post(
           [senderCustomerId]
         );
 
-      if (userRows.length === 0) {
+      if (
+        userRows.length === 0
+      ) {
+
         return res.status(404).json({
           message:
             "User account not found"
@@ -624,6 +633,7 @@ app.post(
         );
 
       if (!secretKeyMatch) {
+
         return res.status(401).json({
           message:
             "Invalid secret key"
@@ -632,14 +642,14 @@ app.post(
 
 
       // ----------------------------------------------
-      // Start database transaction
+      // Start Database Transaction
       // ----------------------------------------------
 
       await connection.beginTransaction();
 
 
       // ----------------------------------------------
-      // Get sender account
+      // Get Sender Account
       // ----------------------------------------------
 
       const [senderRows] =
@@ -654,7 +664,9 @@ app.post(
           [senderCustomerId]
         );
 
-      if (senderRows.length === 0) {
+      if (
+        senderRows.length === 0
+      ) {
 
         await connection.rollback();
 
@@ -669,12 +681,52 @@ app.post(
 
 
       // ----------------------------------------------
-      // Prevent own account transfer
+      // Get Receiver
+      // Account Number OR Mobile Number
+      // ----------------------------------------------
+
+      const [receiverRows] =
+        await connection.query(
+          `SELECT
+             a.account_id,
+             a.account_number,
+             c.customer_id,
+             c.mobile
+           FROM accounts a
+           JOIN demo_customers c
+             ON a.customer_id = c.customer_id
+           WHERE a.account_number = ?
+              OR c.mobile = ?
+           FOR UPDATE`,
+          [
+            receiverIdentifier,
+            receiverIdentifier
+          ]
+        );
+
+      if (
+        receiverRows.length === 0
+      ) {
+
+        await connection.rollback();
+
+        return res.status(404).json({
+          message:
+            "Receiver account or mobile number not found"
+        });
+      }
+
+      const receiver =
+        receiverRows[0];
+
+
+      // ----------------------------------------------
+      // Prevent Own Account Transfer
       // ----------------------------------------------
 
       if (
-        sender.account_number ===
-        receiverAccountNumber
+        sender.account_id ===
+        receiver.account_id
       ) {
 
         await connection.rollback();
@@ -687,7 +739,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Check balance
+      // Check Sender Balance
       // ----------------------------------------------
 
       if (
@@ -705,38 +757,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Get receiver account
-      // ----------------------------------------------
-
-      const [receiverRows] =
-        await connection.query(
-          `SELECT
-             account_id,
-             account_number
-           FROM accounts
-           WHERE account_number = ?
-           FOR UPDATE`,
-          [receiverAccountNumber]
-        );
-
-      if (
-        receiverRows.length === 0
-      ) {
-
-        await connection.rollback();
-
-        return res.status(404).json({
-          message:
-            "Receiver account not found"
-        });
-      }
-
-      const receiver =
-        receiverRows[0];
-
-
-      // ----------------------------------------------
-      // Deduct from sender
+      // Deduct Money From Sender
       // ----------------------------------------------
 
       await connection.query(
@@ -751,7 +772,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Add to receiver
+      // Add Money To Receiver
       // ----------------------------------------------
 
       await connection.query(
@@ -766,7 +787,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Record transaction
+      // Record Transaction
       // ----------------------------------------------
 
       await connection.query(
@@ -788,7 +809,7 @@ app.post(
 
 
       // ----------------------------------------------
-      // Commit
+      // Commit Transaction
       // ----------------------------------------------
 
       await connection.commit();
@@ -801,7 +822,8 @@ app.post(
         amount:
           transferAmount,
 
-        receiverAccountNumber
+        receiverAccountNumber:
+          receiver.account_number
       });
 
     } catch (error) {
@@ -902,6 +924,7 @@ app.post(
         type !== "password" &&
         type !== "secretKey"
       ) {
+
         return res.status(400).json({
           message:
             "Invalid security option"
@@ -917,6 +940,7 @@ app.post(
         );
 
       if (rows.length === 0) {
+
         return res.status(404).json({
           message:
             "Customer not found"
@@ -993,6 +1017,7 @@ app.post(
         );
 
       if (!storedData) {
+
         return res.status(400).json({
           message:
             "OTP expired or not found"
@@ -1003,6 +1028,7 @@ app.post(
         Number(otp) !==
         storedData.otp
       ) {
+
         return res.status(400).json({
           message:
             "Invalid OTP"
@@ -1057,13 +1083,6 @@ app.post(
         newValue
       } = req.body;
 
-      // Temporary debugging log
-      console.log(
-        "SET SECURITY:",
-        customerId,
-        type
-      );
-
       const verificationKey =
         `security_${customerId}`;
 
@@ -1071,6 +1090,7 @@ app.post(
         type !== "password" &&
         type !== "secretKey"
       ) {
+
         return res.status(400).json({
           message:
             "Invalid security option"
@@ -1082,6 +1102,7 @@ app.post(
           verificationKey
         )
       ) {
+
         return res.status(403).json({
           message:
             "Please verify OTP first"
@@ -1092,6 +1113,7 @@ app.post(
         !newValue ||
         newValue.length < 6
       ) {
+
         return res.status(400).json({
           message:
             type === "password"
@@ -1126,17 +1148,7 @@ app.post(
           WHERE customer_id = ?
         `;
       }
-      const [checkRows] = await db.query(
-  `SELECT user_id, customer_id
-   FROM application_users
-   WHERE customer_id = ?`,
-  [customerId]
-);
 
-console.log(
-  "BEFORE SECURITY UPDATE:",
-  checkRows
-);
       const [result] =
         await db.query(
           query,
@@ -1146,14 +1158,10 @@ console.log(
           ]
         );
 
-      console.log(
-        "SECURITY UPDATE AFFECTED ROWS:",
-        result.affectedRows
-      );
-
       if (
         result.affectedRows === 0
       ) {
+
         return res.status(404).json({
           message:
             "User account not found"
