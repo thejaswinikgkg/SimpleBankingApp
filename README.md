@@ -76,4 +76,4 @@ used for real financial transactions.
 ## Author
 Thejaswini K G,
 Information Science and Engineering,
-Siddaganga Institute of Technology, Tumakuru
+Siddaganga Institute of Technology, Tumakuru.
