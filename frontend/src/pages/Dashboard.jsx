@@ -17,7 +17,7 @@ import {
 import Brand from "../components/Brand";
 
 const API_URL =
-  "http://localhost:5000";
+  "https://amis-pay-backend.onrender.com";
 
 
 function Dashboard() {
