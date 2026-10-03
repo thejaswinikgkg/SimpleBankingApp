@@ -48,14 +48,14 @@ customers and accounts for testing AmisPay.
 
 ## Project Structure
 
-SimpleBankingApp/
+SimpleBankingApp
 │
-├── frontend/
-├── backend/
+├── >frontend
+├──> backend
 │
-└── demo-bank/
-    ├── frontend/
-    └── backend/
+└── demo-bank
+    ├──> frontend
+    └──>backend
 
 ## System Architecture
 
